@@ -3,6 +3,8 @@ import { useStorage, withErrorBoundary, withSuspense } from '@extension/shared';
 import { exampleThemeStorage } from '@extension/storage';
 import { t } from '@extension/i18n';
 import { ToggleButton } from '@extension/ui';
+import { Login } from './signin';
+import { useState, useEffect } from 'react';
 
 const notificationOptions = {
   type: 'basic',
@@ -15,6 +17,21 @@ const Popup = () => {
   const theme = useStorage(exampleThemeStorage);
   const isLight = theme === 'light';
   const logo = isLight ? 'popup/logo_vertical.svg' : 'popup/logo_vertical_dark.svg';
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userData, setUserData] = useState<{ email: string; name: string; role: string } | null>(null);
+
+  useEffect(() => {
+    // Check authentication status when component mounts
+    chrome.runtime.sendMessage({ type: 'CHECK_AUTH' }, response => {
+      if (response && response.success) {
+        setIsAuthenticated(response.isLoggedIn);
+        if (response.user) {
+          setUserData(response.user);
+        }
+      }
+    });
+  }, []);
+
   const goGithubSite = () =>
     chrome.tabs.create({ url: 'https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite' });
 
@@ -38,25 +55,69 @@ const Popup = () => {
       });
   };
 
+  const handleLoginSuccess = () => {
+    // Re-check authentication status
+    chrome.runtime.sendMessage({ type: 'CHECK_AUTH' }, response => {
+      if (response && response.success) {
+        setIsAuthenticated(response.isLoggedIn);
+        if (response.user) {
+          setUserData(response.user);
+        }
+      }
+    });
+  };
+
+  const handleLogout = () => {
+    chrome.runtime.sendMessage({ type: 'LOGOUT' }, response => {
+      if (response && response.success) {
+        setIsAuthenticated(false);
+        setUserData(null);
+      }
+    });
+  };
+
   return (
-    <div className={`App ${isLight ? 'bg-slate-50' : 'bg-gray-800'}`}>
-      <header className={`App-header ${isLight ? 'text-gray-900' : 'text-gray-100'}`}>
-        <button onClick={goGithubSite}>
-          <img src={chrome.runtime.getURL(logo)} className="App-logo" alt="logo" />
-        </button>
-        <p>
-          Edit <code>pages/popup/src/Popup.tsx</code>
-        </p>
-        <button
-          className={
-            'font-bold mt-4 py-1 px-4 rounded shadow hover:scale-105 ' +
-            (isLight ? 'bg-blue-200 text-black' : 'bg-gray-700 text-white')
-          }
-          onClick={injectContentScript}>
-          Click to inject Content Script
-        </button>
-        <ToggleButton>{t('toggleTheme')}</ToggleButton>
-      </header>
+    <div className="popup-container">
+      {!isAuthenticated ? (
+        <Login onLoginSuccess={handleLoginSuccess} />
+      ) : (
+        <ProtectedContent userData={userData} onLogout={handleLogout} />
+      )}
+    </div>
+  );
+};
+
+interface ProtectedContentProps {
+  userData: { email: string; name: string; role: string } | null;
+  onLogout: () => void;
+}
+
+const ProtectedContent = ({ userData, onLogout }: ProtectedContentProps) => {
+  return (
+    <div className="p-4">
+      <h2 className="text-xl font-bold mb-4">Protected Content</h2>
+      {userData && (
+        <div className="mb-4 text-gray-700">
+          <p>
+            Welcome <strong>{userData.name}</strong>!
+          </p>
+          <p className="text-sm">{userData.email}</p>
+          <p className="text-xs bg-blue-100 inline-block px-2 py-1 rounded mt-1">Role: {userData.role}</p>
+        </div>
+      )}
+
+      <div className="bg-blue-100 p-3 rounded mb-4">
+        <h3 className="font-semibold mb-2">Your Dashboard</h3>
+        <ul className="list-disc pl-5">
+          <li>Feature 1</li>
+          <li>Feature 2</li>
+          <li>Feature 3</li>
+        </ul>
+      </div>
+
+      <button onClick={onLogout} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full">
+        Logout
+      </button>
     </div>
   );
 };

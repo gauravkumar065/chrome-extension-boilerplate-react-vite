@@ -30,14 +30,13 @@ const manifest = {
   version: packageJson.version,
   description: '__MSG_extensionDescription__',
   host_permissions: ['<all_urls>'],
-  permissions: ['storage', 'scripting', 'tabs', 'notifications', 'sidePanel'],
+  permissions: ['storage', 'scripting', 'tabs', 'notifications', 'sidePanel', 'activeTab'],
   options_page: 'options/index.html',
   background: {
     service_worker: 'background.js',
     type: 'module',
   },
   action: {
-    default_popup: 'popup/index.html',
     default_icon: 'icon-34.png',
   },
   chrome_url_overrides: {
@@ -50,6 +49,7 @@ const manifest = {
     {
       matches: ['http://*/*', 'https://*/*', '<all_urls>'],
       js: ['content/index.iife.js'],
+      run_at: 'document_idle',
     },
     {
       matches: ['http://*/*', 'https://*/*', '<all_urls>'],
@@ -63,8 +63,8 @@ const manifest = {
   devtools_page: 'devtools/index.html',
   web_accessible_resources: [
     {
-      resources: ['*.js', '*.css', '*.svg', 'icon-128.png', 'icon-34.png'],
-      matches: ['*://*/*'],
+      resources: ['*.js', '*.css', '*.svg', 'icon-128.png', 'icon-34.png', 'popup/index.html', 'popup/*', 'options/*'],
+      matches: ['*://*/*', 'chrome-extension://*/*'],
     },
   ],
   side_panel: {
