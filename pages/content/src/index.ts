@@ -81,36 +81,6 @@ function createPopup() {
   container.style.flexDirection = 'column';
   container.style.backgroundColor = '#FFFFFF';
 
-  // Create drag handle
-  const dragHandle = document.createElement('div');
-  dragHandle.id = 'chrome-extension-floating-popup-drag-handle';
-  dragHandle.style.height = '30px';
-  dragHandle.style.width = '100%';
-  dragHandle.style.cursor = 'move';
-  dragHandle.style.display = 'flex';
-  dragHandle.style.justifyContent = 'space-between';
-  dragHandle.style.alignItems = 'center';
-  dragHandle.style.background = 'rgba(0, 0, 0, 0.05)';
-  dragHandle.style.userSelect = 'none';
-  dragHandle.style.padding = '0 10px';
-
-  // Add drag handle title
-  const dragHandleTitle = document.createElement('span');
-  dragHandleTitle.textContent = '⋮⋮';
-  dragHandleTitle.style.fontSize = '18px';
-  dragHandleTitle.style.color = '#555';
-  dragHandle.appendChild(dragHandleTitle);
-
-  // Add close button
-  const closeButton = document.createElement('span');
-  closeButton.textContent = '✕';
-  closeButton.style.fontSize = '16px';
-  closeButton.style.color = '#555';
-  closeButton.style.cursor = 'pointer';
-  closeButton.style.padding = '0 5px';
-  closeButton.onclick = removePopup;
-  dragHandle.appendChild(closeButton);
-
   // Create resize handle
   const resizeHandle = document.createElement('div');
   resizeHandle.id = 'chrome-extension-floating-popup-resize-handle';
@@ -126,7 +96,7 @@ function createPopup() {
   const iframe = document.createElement('iframe');
   iframe.id = 'chrome-extension-floating-popup-iframe';
   iframe.style.width = '100%';
-  iframe.style.height = 'calc(100% - 30px)';
+  iframe.style.height = '100%';
   iframe.style.border = 'none';
   iframe.allow = 'clipboard-read; clipboard-write';
   iframe.src = chrome.runtime.getURL('popup/index.html');
@@ -151,6 +121,11 @@ function createPopup() {
             }
           }
         }
+
+        // Handle drag and close events from the ProtectedContent header
+        if (event.data && event.data.type === 'closePopup') {
+          removePopup();
+        }
       };
 
       window.addEventListener('message', handleIframeMessage);
@@ -160,7 +135,6 @@ function createPopup() {
   });
 
   // Add elements to the container
-  container.appendChild(dragHandle);
   container.appendChild(iframe);
   container.appendChild(resizeHandle);
 
@@ -170,11 +144,18 @@ function createPopup() {
   popupElement = iframe;
   isPopupOpen = true;
 
-  // Add event listeners for dragging
-  dragHandle.addEventListener('mousedown', startDragging);
-
-  // Add event listeners for resizing
+  // Add event listener for resizing
   resizeHandle.addEventListener('mousedown', startResizing);
+
+  // Set up drag functionality on the whole container for now
+  // The actual header in ProtectedContent will be the visual drag handle
+  container.addEventListener('mousedown', e => {
+    // Only start dragging if the click is on the header area
+    // (approximately top 40px of the popup)
+    if (e.offsetY < 40) {
+      startDragging(e);
+    }
+  });
 }
 
 function removePopup() {

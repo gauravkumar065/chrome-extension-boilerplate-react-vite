@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ProtectedContentProps {
   userData: { email: string; name: string; role: string } | null;
@@ -8,15 +8,29 @@ interface ProtectedContentProps {
 export const ProtectedContent = ({ userData, onLogout }: ProtectedContentProps) => {
   const [activeTab, setActiveTab] = useState<'settings' | 'patientHistory' | 'transcript'>('transcript');
 
+  // Function to handle the close button click
+  const handleClose = () => {
+    // Send a message to the content script to close the popup
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'closePopup' }, '*');
+    }
+  };
+
+  // Function to handle fullscreen toggle
+  const toggleFullscreen = () => {
+    // Add fullscreen functionality if needed
+    // This could expand the popup to cover most of the screen
+  };
+
   return (
     <div className="flex flex-col h-full">
-      <header className="flex items-center p-2 border-b border-gray-200">
+      <header className="flex items-center p-2 border-b border-gray-200 cursor-move">
         <div className="flex items-center">
           <img src="path/to/logo.svg" alt="Intelidoc-AI" className="h-8 mr-2" />
           <span className="text-lg font-semibold">Intelidoc-AI</span>
         </div>
         <div className="flex ml-auto">
-          <button className="p-1 rounded-md hover:bg-gray-100" title="Fullscreen">
+          <button className="p-1 rounded-md hover:bg-gray-100" title="Fullscreen" onClick={toggleFullscreen}>
             <svg
               className="w-6 h-6"
               fill="none"
@@ -30,7 +44,7 @@ export const ProtectedContent = ({ userData, onLogout }: ProtectedContentProps) 
                 d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"></path>
             </svg>
           </button>
-          <button className="p-1 rounded-md hover:bg-gray-100 ml-1" title="Close">
+          <button className="p-1 rounded-md hover:bg-gray-100 ml-1" title="Close" onClick={handleClose}>
             <svg
               className="w-6 h-6"
               fill="none"
