@@ -5,6 +5,7 @@ import { t } from '@extension/i18n';
 import { ToggleButton } from '@extension/ui';
 import { Login } from './signin';
 import { useState, useEffect } from 'react';
+import { ProtectedContent } from './protected';
 
 const notificationOptions = {
   type: 'basic',
@@ -88,41 +89,6 @@ const Popup = () => {
       ) : (
         <ProtectedContent userData={userData} onLogout={handleLogout} />
       )}
-    </div>
-  );
-};
-
-interface ProtectedContentProps {
-  userData: { email: string; name: string; role: string } | null;
-  onLogout: () => void;
-}
-
-const ProtectedContent = ({ userData, onLogout }: ProtectedContentProps) => {
-  return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-4">Protected Content</h2>
-      {userData && (
-        <div className="mb-4 text-gray-700">
-          <p>
-            Welcome <strong>{userData.name}</strong>!
-          </p>
-          <p className="text-sm">{userData.email}</p>
-          <p className="text-xs bg-blue-100 inline-block px-2 py-1 rounded mt-1">Role: {userData.role}</p>
-        </div>
-      )}
-
-      <div className="bg-blue-100 p-3 rounded mb-4">
-        <h3 className="font-semibold mb-2">Your Dashboard</h3>
-        <ul className="list-disc pl-5">
-          <li>Feature 1</li>
-          <li>Feature 2</li>
-          <li>Feature 3</li>
-        </ul>
-      </div>
-
-      <button onClick={onLogout} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full">
-        Logout
-      </button>
     </div>
   );
 };
