@@ -19,6 +19,7 @@ const Popup = () => {
   const logo = isLight ? 'popup/logo_vertical.svg' : 'popup/logo_vertical_dark.svg';
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userData, setUserData] = useState<{ email: string; name: string; role: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // Check authentication status when component mounts
@@ -29,11 +30,9 @@ const Popup = () => {
           setUserData(response.user);
         }
       }
+      setIsLoading(false);
     });
   }, []);
-
-  const goGithubSite = () =>
-    chrome.tabs.create({ url: 'https://github.com/Jonghakseo/chrome-extension-boilerplate-react-vite' });
 
   const injectContentScript = async () => {
     const [tab] = await chrome.tabs.query({ currentWindow: true, active: true });
@@ -57,6 +56,7 @@ const Popup = () => {
 
   const handleLoginSuccess = () => {
     // Re-check authentication status
+    setIsLoading(true);
     chrome.runtime.sendMessage({ type: 'CHECK_AUTH' }, response => {
       if (response && response.success) {
         setIsAuthenticated(response.isLoggedIn);
@@ -64,6 +64,7 @@ const Popup = () => {
           setUserData(response.user);
         }
       }
+      setIsLoading(false);
     });
   };
 
@@ -78,7 +79,11 @@ const Popup = () => {
 
   return (
     <div className="popup-container">
-      {!isAuthenticated ? (
+      {isLoading ? (
+        <div className="flex justify-center items-center h-40">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500"></div>
+        </div>
+      ) : !isAuthenticated ? (
         <Login onLoginSuccess={handleLoginSuccess} />
       ) : (
         <ProtectedContent userData={userData} onLogout={handleLogout} />
